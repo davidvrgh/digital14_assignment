@@ -1,4 +1,4 @@
-package com.digital14_imageloading;
+package com.digital14_imageloading.utils;
 
 public interface ListItemClickListener {
 

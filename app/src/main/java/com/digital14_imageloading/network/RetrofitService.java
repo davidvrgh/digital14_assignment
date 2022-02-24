@@ -1,4 +1,6 @@
-package com.digital14_imageloading;
+package com.digital14_imageloading.network;
+
+import static com.digital14_imageloading.constants.Constants.DOMAIN;
 
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -6,7 +8,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class RetrofitService {
 
 
-    private static String DOMAIN = "https://pixabay.com";
     private static ApiService SERVICE;
 
     public static ApiService getInstance() {

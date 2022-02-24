@@ -1,4 +1,4 @@
-package com.digital14_imageloading;
+package com.digital14_imageloading.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -11,15 +11,22 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.digital14_imageloading.R;
+import com.digital14_imageloading.model.ImageListResponse;
+import com.digital14_imageloading.utils.ListItemClickListener;
+import com.digital14_imageloading.viewmodel.ImageListViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
+public class ListAdapter extends RecyclerView.Adapter<ListAdapter.BaseHolder> {
 
     private List<ImageListResponse.Hit> mHits;
     private Context mContext;
     private ListItemClickListener mListener;
+
+    private static final int TYPE_LOADING = 1;
+    private static final int TYPE_ITEM = 2;
 
     public ListAdapter(Context context, ListItemClickListener listener) {
         mHits = new ArrayList<>();
@@ -35,14 +42,29 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
 
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        //View view = LayoutInflater.from(mContext).inflate(R.layout.item_view, parent, false);
-        return new ViewHolder(LayoutInflater.from(mContext).inflate(R.layout.item_view, parent, false), mListener);
+    public BaseHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        switch (viewType) {
+            case TYPE_LOADING:
+                return new ProgressViewHolder(LayoutInflater.from(mContext).inflate(R.layout.item_view_loader, parent, false));
+            default:
+                return new ViewHolder(LayoutInflater.from(mContext).inflate(R.layout.item_view, parent, false), mListener);
+
+        }
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull BaseHolder holder, int position) {
         holder.bind(mHits.get(position));
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        if (mHits.get(position).getId() == ImageListViewModel.ID_DUMMY) {
+            return TYPE_LOADING;
+        } else {
+            return TYPE_ITEM;
+        }
+
     }
 
     @Override
@@ -50,7 +72,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
         return mHits.size();
     }
 
-    class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    class ViewHolder extends BaseHolder implements View.OnClickListener {
         private TextView mTXt;
         private ImageView mImg;
         private ListItemClickListener mListener;
@@ -75,6 +97,27 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
         public void onClick(View v) {
             mListener.onItemClick(mLatestModel.getLargeImageURL());
         }
+    }
+
+    class ProgressViewHolder extends BaseHolder {
+
+        public ProgressViewHolder(@NonNull View itemView) {
+            super(itemView);
+        }
+
+        @Override
+        void bind(ImageListResponse.Hit hit) {
+
+        }
+    }
+
+    abstract class BaseHolder extends RecyclerView.ViewHolder {
+
+        public BaseHolder(@NonNull View itemView) {
+            super(itemView);
+        }
+
+        abstract void bind(ImageListResponse.Hit hit);
     }
 
 }

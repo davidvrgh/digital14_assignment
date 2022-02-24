@@ -1,4 +1,4 @@
-package com.digital14_imageloading;
+package com.digital14_imageloading.fragment;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;

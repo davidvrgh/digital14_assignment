@@ -1,24 +1,38 @@
-package com.digital14_imageloading;
+package com.digital14_imageloading.fragment;
 
+import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.digital14_imageloading.viewmodel.ImageListViewModel;
+import com.digital14_imageloading.adapter.ListAdapter;
+import com.digital14_imageloading.utils.ListItemClickListener;
 import com.digital14_imageloading.databinding.ImgListFragmentBinding;
+import com.digital14_imageloading.result.Result;
 
-public class ImageListFragment extends Fragment implements ImageListModel.Listener, ListItemClickListener {
+public class ImageListFragment extends Fragment implements ListItemClickListener, Observer<Result>, View.OnClickListener {
 
+    public static final String TAG = ImageListFragment.class.getSimpleName();
     private ImgListFragmentBinding mBinding;
-    private ImageListModel mImageListModel;
     private ListAdapter mAdapter;
+    private ImageListViewModel mViewModel;
+    private Listener mListener;
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        mListener = (Listener) context;
+    }
 
     public static ImageListFragment getInstance() {
         return new ImageListFragment();
@@ -40,16 +54,8 @@ public class ImageListFragment extends Fragment implements ImageListModel.Listen
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mBinding.btnSubmit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String query = mBinding.edtSearch.getText().toString();
-                mImageListModel = new ImageListModel(query, ImageListFragment.this);
-                mImageListModel.loadData();
-            }
-        });
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
-        mBinding.list.setLayoutManager(linearLayoutManager);
+        mViewModel = new ViewModelProvider(requireActivity()).get(ImageListViewModel.class);
+        mBinding.btnSubmit.setOnClickListener(this);
         mBinding.list.setAdapter(mAdapter);
         mBinding.list.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -62,19 +68,42 @@ public class ImageListFragment extends Fragment implements ImageListModel.Listen
                 super.onScrolled(recyclerView, dx, dy);
                 int lastViewPosition = recyclerView.getChildAdapterPosition(recyclerView.getChildAt(recyclerView.getChildCount() - 1));
                 if (lastViewPosition >= mAdapter.getItemCount() - 1) {
-                    mImageListModel.loadData();
+                    mViewModel.loadData();
                 }
             }
         });
-    }
-
-    @Override
-    public void doRefresh() {
-        mAdapter.setListItems(mImageListModel.getDisplayList());
+        mViewModel.getResult().observe(getViewLifecycleOwner(), this);
     }
 
     @Override
     public void onItemClick(String url) {
-        getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, ImageDetailFragment.getInstance(url), ImageDetailFragment.TAG).addToBackStack(ImageDetailFragment.TAG).commit();
+        mListener.onItemClick(url);
     }
+
+    @Override
+    public void onChanged(Result result) {
+        switch (result.getResultType()) {
+            case TYPE_FAILURE:
+                Toast.makeText(getActivity(), "Error", Toast.LENGTH_SHORT).show(); //Need more descriptive error
+                mAdapter.setListItems(result.getList());
+                break;
+            case TYPE_SUCCESS:
+                mAdapter.setListItems(result.getList());
+                break;
+            case TYPE_PROGRESS:
+                mAdapter.setListItems(result.getList());
+                break;
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+        String query = mBinding.edtSearch.getText().toString();
+        mViewModel.setQuery(query);
+    }
+
+    public interface Listener extends ListItemClickListener {
+
+    }
+
 }
